@@ -52,7 +52,12 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session= Depends(d
         headers={"WWW-Authenticate": "Bearer"}
     )
     
-    token = verify_access_token(token, credentials_exception)
-    user = db.query(models.User).filter(models.User.id == token.user_id).first()
+    token_data = verify_access_token(token, credentials_exception)
+    user = db.query(models.User).filter(models.User.id == token_data.user_id).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
 
     return user
