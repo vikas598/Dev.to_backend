@@ -10,7 +10,7 @@ class UserCreate(UserBase):
     password: str
 
 class UserResponse(UserBase):
-    user_id: int
+    id: int
     created_at: datetime
     
     model_config= ConfigDict(from_attributes=True)
@@ -21,7 +21,10 @@ class UserLogin(BaseModel):
 
 class TokenResponse(BaseModel):
     access_token: str
-    token_type: str   
+    token_type: str  
+
+class TokenData(BaseModel):
+    id: Optional[str]=None 
 
 class UserProfile(UserResponse):
     avatar_url: Optional[str] = None
