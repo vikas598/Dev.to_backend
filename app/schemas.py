@@ -21,10 +21,10 @@ class TokenResponse(BaseModel):
     token_type: str  
 
 class TokenData(BaseModel):
-    id: Optional[str]=None 
+    user_id: Optional[int]=None 
 
 class UserProfile(UserResponse):
-    avatar_url: Optional[str] = None
+    username: Optional[str] = None
     bio: Optional[str] = None
 
 class UserUpdate(BaseModel):
