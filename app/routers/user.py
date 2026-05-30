@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, status, HTTPException, File, UploadFile
-from .. import schemas, models, utils, oauth2
+from .. import schemas, models, utils, oauth2, cloudinary
 from ..database import get_db
 from sqlalchemy.orm import Session
+from io import BytesIO
 
 router= APIRouter( prefix = '/users', tags=['users'])
 
@@ -23,7 +24,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 def get_me(current_user= Depends(oauth2.get_current_user)):
     return current_user
 
-@router.put('/me', response_model= schemas.UserProfile)
+@router.patch('/me', response_model= schemas.UserProfile)
 def update_me(user_update: schemas.UserUpdate, db: Session = Depends(get_db), current_user= Depends(oauth2.get_current_user)):
     user_data = user_update.model_dump(exclude_unset=True)
     for key, value in user_data.items():
@@ -35,7 +36,28 @@ def update_me(user_update: schemas.UserUpdate, db: Session = Depends(get_db), cu
 
     return current_user
 
-@router.put('/me/avatar', response_model= schemas.UserProfile)
+@router.patch('/me/avatar', response_model= schemas.UserProfile)
+def update_avatar(file: UploadFile = File(...), db: Session = Depends(get_db), current_user= Depends(oauth2.get_current_user)):
+    if not (file.content_type and file.content_type.startswith("image/")):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file type. Images only.")
+
+    data = file.file.read()
+    file.file.close()
+
+    max_bytes = 2 * 1024 * 1024
+    if len(data) > max_bytes:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File size exceeds 2MB limit.")
+
+    avatar_url = cloudinary.upload_image(BytesIO(data))
+    if not avatar_url:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Failed to upload avatar to Cloudinary.")
+
+    current_user.avatar_url = avatar_url
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+
+    return current_user
 
 @router.get('/{id:int}', response_model= schemas.UserResponse)
 def get_user(id:int, db: Session = Depends(get_db)):

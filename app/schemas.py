@@ -11,6 +11,7 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id: int
+    avatar_url: Optional[str] = None
     created_at: datetime
     
     model_config= ConfigDict(from_attributes=True)
@@ -26,10 +27,12 @@ class TokenData(BaseModel):
 class UserProfile(UserResponse):
     username: Optional[str] = None
     bio: Optional[str] = None
+    avatar_url: Optional[str] = None
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
     bio: Optional[str] = None
+    avatar_url: Optional[str] = None
 
 class PostBase(BaseModel):
     title: str
